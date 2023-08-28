@@ -14,6 +14,7 @@ type Config struct {
 		Bucket    string `toml:"bucket"`
 		AccessKey string `toml:"access_key"`
 		SecretKey string `toml:"secret_key"`
+		SSL       bool   `toml:"ssl"`
 	} `toml:"s3"`
 }
 

@@ -6,3 +6,4 @@ endpoint = ""
 bucket = ""
 access_key = ""
 secret_key = ""
+ssl = false

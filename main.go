@@ -5,34 +5,41 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 
 	"github.com/catgir-ls/assets/utils"
 	"github.com/gofiber/fiber/v2"
-
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 func main() {
-	err := utils.LoadConfig("config.toml")
+	// Configuration
+	configPath := os.Getenv("CONFIG")
 
-	if err != nil {
-		log.Fatalln("Unable to load config")
+	if configPath == "" {
+		configPath = "config.toml"
 	}
 
-	config := utils.GetConfig()
+	if err := utils.LoadConfig(configPath); err != nil {
+		log.Fatalln("Unable to load config:", err)
+	}
 
+	// Variables
+	config := utils.GetConfig()
 	app := fiber.New()
 
+	// Initialize Minio
 	client, err := minio.New(config.S3.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(config.S3.AccessKey, config.S3.SecretKey, ""),
-		Secure: true,
+		Secure: config.S3.SSL,
 	})
 
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Unable to initialize MinIO client:", err)
 	}
 
+	// Routes
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"status":  200,
@@ -41,8 +48,15 @@ func main() {
 		})
 	})
 
-	app.Get("/:file", func(c *fiber.Ctx) error {
-		obj, err := client.GetObject(context.Background(), config.S3.Bucket, c.Params("file"), minio.GetObjectOptions{})
+	app.Get("/assets/:file", func(c *fiber.Ctx) error {
+		fmt.Printf("[x] File -> %s\n", c.Params("file"))
+
+		obj, err := client.GetObject(
+			context.Background(),
+			config.S3.Bucket,
+			c.Params("file"),
+			minio.GetObjectOptions{},
+		)
 
 		if err != nil {
 			return c.SendStatus(404)
