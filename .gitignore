@@ -1,0 +1,4 @@
+go.sum
+
+*.toml
+!config.example.toml
