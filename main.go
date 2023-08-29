@@ -5,39 +5,42 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 
-	"github.com/catgir-ls/assets/utils"
+	"github.com/catgir-ls/assets/config"
+	"github.com/catgir-ls/assets/logger"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 func main() {
-	// Configuration
-	configPath := os.Getenv("CONFIG")
+	// Initialize Config
+	config, err := config.Load("config.toml")
 
-	if configPath == "" {
-		configPath = "config.toml"
+	if err != nil {
+		log.Fatalln("Unable to load config")
 	}
 
-	if err := utils.LoadConfig(configPath); err != nil {
-		log.Fatalln("Unable to load config:", err)
-	}
+	logger.Log("Succesfully loaded items into the config!")
 
 	// Variables
-	config := utils.GetConfig()
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: true,
+		Prefork:               true,
+	})
 
-	// Initialize Minio
+	// Initialize MinIO
 	client, err := minio.New(config.S3.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(config.S3.AccessKey, config.S3.SecretKey, ""),
 		Secure: config.S3.SSL,
 	})
 
 	if err != nil {
-		log.Fatalln("Unable to initialize MinIO client:", err)
+		logger.Error("Unable to initialize MinIO client!", true)
 	}
+
+	logger.Log("Succesfully initialized MinIO client!")
 
 	// Routes
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -49,28 +52,37 @@ func main() {
 	})
 
 	app.Get("/assets/:file", func(c *fiber.Ctx) error {
+		file := c.Params("file")
+
+		logger.Log(fmt.Sprintf("Fetching %s", file))
+
 		obj, err := client.GetObject(
 			context.Background(),
 			config.S3.Bucket,
-			c.Params("file"),
+			file,
 			minio.GetObjectOptions{},
 		)
 
 		if err != nil {
+			logger.Error(fmt.Sprintf("Unable to fetch %s -> %s", file, err.Error()), false)
 			return c.SendStatus(404)
 		}
+
+		logger.Log(fmt.Sprintf("Fetched %s", file))
 
 		defer obj.Close()
 
 		data, err := io.ReadAll(obj)
 
 		if err != nil {
+			logger.Error(fmt.Sprintf("Failed to read %s -> %s", file, err.Error()), false)
 			return c.SendStatus(404)
 		}
 
 		stat, err := obj.Stat()
 
 		if err != nil {
+			logger.Error(fmt.Sprintf("Failed to stat %s -> %s", file, err.Error()), false)
 			return c.SendStatus(404)
 		}
 

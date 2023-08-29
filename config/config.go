@@ -1,6 +1,8 @@
-package utils
+package config
 
 import (
+	"os"
+
 	"github.com/BurntSushi/toml"
 )
 
@@ -18,16 +20,14 @@ type Config struct {
 	} `toml:"s3"`
 }
 
-var (
-	cfg Config
-)
+func Load(default_path string) (config Config, err error) {
+	path := os.Getenv("CONFIG")
 
-func LoadConfig(path string) (err error) {
-	_, err = toml.DecodeFile(path, &cfg)
+	if path == "" {
+		path = default_path
+	}
+
+	_, err = toml.DecodeFile(path, &config)
 
 	return
-}
-
-func GetConfig() Config {
-	return cfg
 }
