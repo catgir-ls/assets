@@ -49,8 +49,6 @@ func main() {
 	})
 
 	app.Get("/assets/:file", func(c *fiber.Ctx) error {
-		fmt.Printf("[x] File -> %s\n", c.Params("file"))
-
 		obj, err := client.GetObject(
 			context.Background(),
 			config.S3.Bucket,
@@ -70,6 +68,13 @@ func main() {
 			return c.SendStatus(404)
 		}
 
+		stat, err := obj.Stat()
+
+		if err != nil {
+			return c.SendStatus(404)
+		}
+
+		c.Set("Content-Type", stat.ContentType)
 		return c.Send(data)
 	})
 
