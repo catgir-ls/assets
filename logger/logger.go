@@ -13,7 +13,7 @@ func getTime() string {
 }
 
 func color(str, color string) {
-	_, file, line, ok := runtime.Caller(2) // Adjusted caller depth
+	_, file, line, ok := runtime.Caller(2)
 
 	if !ok {
 		log.Fatalln("Unable to get caller")
