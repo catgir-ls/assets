@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-
+	
 	"github.com/catgir-ls/assets/config"
 	"github.com/catgir-ls/assets/logger"
 
@@ -17,7 +17,7 @@ import (
 func main() {
 	// Initialize Config
 	config, err := config.Load("config.toml")
-
+	
 	if err != nil {
 		log.Fatalln("Unable to load config")
 	}
@@ -27,7 +27,7 @@ func main() {
 	// Variables
 	app := fiber.New(fiber.Config{
 		DisableStartupMessage: true,
-		Prefork:               true,
+		Prefork:               false,
 	})
 
 	// Initialize MinIO
