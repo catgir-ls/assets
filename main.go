@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	
+
 	"github.com/catgir-ls/assets/config"
 	"github.com/catgir-ls/assets/logger"
 
@@ -17,7 +17,7 @@ import (
 func main() {
 	// Initialize Config
 	config, err := config.Load("config.toml")
-	
+
 	if err != nil {
 		log.Fatalln("Unable to load config")
 	}
@@ -51,7 +51,7 @@ func main() {
 		})
 	})
 
-	app.Get("/assets/:file", func(c *fiber.Ctx) error {
+	app.Get("/:file", func(c *fiber.Ctx) error {
 		file := c.Params("file")
 
 		logger.Log(fmt.Sprintf("Fetching %s", file))
@@ -88,10 +88,6 @@ func main() {
 
 		c.Set("Content-Type", stat.ContentType)
 		return c.Send(data)
-	})
-
-	app.Get("/*", func(c *fiber.Ctx) error {
-		return c.SendStatus(404)
 	})
 
 	log.Fatal(app.Listen(fmt.Sprintf(":%d", config.App.Port)))
